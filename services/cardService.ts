@@ -61,16 +61,15 @@ export async function createCard(name:string, id:number, type) {
     }
 
     await cardRepository.insert(cardData)
-
-// const encryptedString = cryptr.encrypt('bacon');
-// const decryptedString = cryptr.decrypt(encryptedString);
 }
 
 export async function validateCard(CVC:string, id:number, type) {
     const card = await cardRepository.findByTypeAndEmployeeId(type, id)
     if(!card)throw{type:404, message:"Card not found"}
+
+    if(card.password !==null) throw{type:404}
+
     const decryptedCVC = cryptr.decrypt(card.securityCode);
-    console.log("🚀 ~ file: cardService.ts ~ line 75 ~ validateCard ~ decryptedCVC", decryptedCVC)
     if(CVC !== decryptedCVC) throw{type:401, message:"This is the incorect card"}
 
     return card.id;
@@ -85,4 +84,52 @@ export async function updateCard(password:string, id:number) {
 
     await cardRepository.update(id, cardData)
     
+}
+
+export async function blockCard(cardData) {
+    const {number, CVC, password} = cardData;
+    const card = await cardRepository.findByCardNumber(number)
+    if(!card) throw{type:404}
+
+    const data = card.expirationDate.split('/');
+
+    if(!((data[1]===dayjs().format('YY')&&data[0]>=dayjs().format('MM'))||data[1]>=dayjs().format('YY')))throw{type:401}
+
+    if(card.isBlocked) throw{type:401}
+
+    const decryptedCVC = cryptr.decrypt(card.securityCode);
+    if(CVC !== decryptedCVC) throw{type:401}
+
+    const decryptedPassword = cryptr.decrypt(card.password);
+    if(password !== decryptedPassword) throw{type:401}
+
+    const blockCard = {
+        isBlocked: true
+    }
+
+    await cardRepository.update(card.id, blockCard)
+}
+export async function unblockCard(cardData) {
+    const {number, CVC, password} = cardData;
+    const card = await cardRepository.findByCardNumber(number)
+    if(!card) throw{type:404}
+
+    const data = card.expirationDate.split('/');
+    
+ if(!((data[1]===dayjs().format('YY')&&data[0]>=dayjs().format('MM'))||data[1]>=dayjs().format('YY')))throw{type:401}
+
+
+    if(!card.isBlocked) throw{type:401}
+
+    const decryptedCVC = cryptr.decrypt(card.securityCode);
+    if(CVC !== decryptedCVC) throw{type:401}
+
+    const decryptedPassword = cryptr.decrypt(card.password);
+    if(password !== decryptedPassword) throw{type:401}
+
+    const unblockCard = {
+        isBlocked: false
+    }
+
+    await cardRepository.update(card.id, unblockCard)
 }
