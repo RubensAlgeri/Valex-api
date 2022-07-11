@@ -10,5 +10,15 @@ export async function createCard(req:Request, res:Response) {
         const {employee, id}:{employee:string,id:number} = await cardService.checkEmployee(employeeId, companyId)
         await cardService.createCard(employee, id, type)
 
-        res.send(employee);
+        res.sendStatus(200);
 };
+
+export async function validateCard(req:Request, res:Response) {
+        const {id} = req.params;
+        const {CVC, password, type} = req.body;
+
+        const cardId = await cardService.validateCard(CVC, parseInt(id), type)
+        await cardService.updateCard(password, parseInt(cardId))
+
+        res.sendStatus(200)
+}

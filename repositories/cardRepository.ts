@@ -44,7 +44,7 @@ export async function findByTypeAndEmployeeId(
   employeeId: number
 ) {
   const result = await connection.query<Card, [TransactionTypes, number]>(
-    `SELECT * FROM cards WHERE type=$1 AND "employeeId"=$2`,
+    `SELECT * FROM cards WHERE type=$1 AND "employeeId"=$2 AND password ISNULL`,
     [type, employeeId]
   );
 
@@ -108,7 +108,6 @@ export async function update(id: number, cardData: CardUpdateData) {
       object: cardData,
       offset: 2,
     });
-
   connection.query(
     `
     UPDATE cards
