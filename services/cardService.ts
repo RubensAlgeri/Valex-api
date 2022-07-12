@@ -3,7 +3,7 @@ import * as employeeRepository from "../repositories/employeeRepository.js";
 import * as companyRepository from "../repositories/companyRepository.js";
 import * as rechargeRepository from "../repositories/rechargeRepository.js";
 import * as paymentRepository from "../repositories/paymentRepository.js";
-import * as utils from "../utils/cardUtil.js";
+import * as utils from "../utils/checkCard.js";
 
 import { faker } from '@faker-js/faker';
 import dayjs from 'dayjs'
