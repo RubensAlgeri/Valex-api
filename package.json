@@ -5,7 +5,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "./node_modules/typescript/bin/tsc",
     "start": "node dist/app.js",
     "dev": "nodemon app.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -24,8 +24,7 @@
     "express-async-errors": "^3.1.1",
     "faker": "^6.6.6",
     "joi": "^17.6.0",
-    "pg": "^8.7.3",
-    "tsc": "^2.0.4"
+    "pg": "^8.7.3"
   },
   "devDependencies": {
     "@faker-js/faker": "^7.3.0",
