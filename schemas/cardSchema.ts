@@ -12,7 +12,5 @@ export const validateCardSchema = joi.object({
 });
 
 export const changeStatusSchema = joi.object({
-    CVC: joi.string().regex(/^[0-9]{3}$/).required(),
-    number: joi.string().regex(/^[0-9]{12}$/).required(),
     password: joi.string().regex(/^[0-9]{4}$/).required()
 });

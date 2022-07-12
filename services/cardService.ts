@@ -46,7 +46,6 @@ export async function checkEmployee(id: number, companyId:number){
 export async function createCard(name:string, id:number, type) {
     const number = faker.random.numeric(12).toString();
     const CVC = faker.random.numeric(3).toString();
-    console.log("🚀 ~ file: cardService.ts ~ line 47 ~ createCard ~ CVC", CVC)
     const expirationDate = dayjs().add(5,"year").format("MM/YY")
 
     const encryptedCVC = cryptr.encrypt(CVC);
@@ -65,8 +64,13 @@ export async function createCard(name:string, id:number, type) {
     await cardRepository.insert(cardData)
 }
 
-export async function validateCard(CVC:string, id:number, type) {
+export async function hasSameTypeCard(type, id:number) {
     const card = await cardRepository.findByTypeAndEmployeeId(type, id)
+    if(card) throw{type:409, message:"A card with the same type alredy exists"}
+}
+
+export async function validateCard(CVC:string, id:number) {
+    const card = await cardRepository.findById(id)
     if(!card)throw{type:404, message:"Card not found"}
 
     if(card.password !==null) throw{type:404}
@@ -74,7 +78,6 @@ export async function validateCard(CVC:string, id:number, type) {
     const decryptedCVC = cryptr.decrypt(card.securityCode);
     if(CVC !== decryptedCVC) throw{type:401, message:"This is the incorect card"}
 
-    return card.id;
 }
 export async function updateCard(password:string, id:number) {
     const encryptedPassword = cryptr.encrypt(password)
@@ -88,70 +91,44 @@ export async function updateCard(password:string, id:number) {
     
 }
 
-export async function blockCard(cardData) {
-    const {number, CVC, password} = cardData;
-    const card = await cardRepository.findByCardNumber(number)
-    if(!card) throw{type:404}
+export async function changeBlockStatus(id:number, password:string) {
+    const card = await cardRepository.findById(id)
+    if(!card) throw{type:404,message:"Card not found"}
 
     const data = card.expirationDate.split('/');
 
     if(!((data[1]===dayjs().format('YY')&&data[0]>=dayjs().format('MM'))||data[1]>=dayjs().format('YY')))throw{type:401}
 
-    if(card.isBlocked) throw{type:401}
-
-    const decryptedCVC = cryptr.decrypt(card.securityCode);
-    if(CVC !== decryptedCVC) throw{type:401}
-
     const decryptedPassword = cryptr.decrypt(card.password);
-    if(password !== decryptedPassword) throw{type:401}
+    if(password !== decryptedPassword) throw{type:401,message:"Wrong password"}
 
     const blockCard = {
-        isBlocked: true
+        isBlocked: !card.isBlocked
     }
 
     await cardRepository.update(card.id, blockCard)
 }
-export async function unblockCard(cardData) {
-    const {number, CVC, password} = cardData;
-    const card = await cardRepository.findByCardNumber(number)
-    if(!card) throw{type:404}
 
-    const data = card.expirationDate.split('/');
-    
-    if(!((data[1]===dayjs().format('YY')&&data[0]>=dayjs().format('MM'))||data[1]>=dayjs().format('YY')))throw{type:401}
-
-
-    if(!card.isBlocked) throw{type:401}
-
-    const decryptedCVC = cryptr.decrypt(card.securityCode);
-    if(CVC !== decryptedCVC) throw{type:401}
-
-    const decryptedPassword = cryptr.decrypt(card.password);
-    if(password !== decryptedPassword) throw{type:401}
-
-    const unblockCard = {
-        isBlocked: false
-    }
-
-    await cardRepository.update(card.id, unblockCard)
-}
-
-export async function checkCard(id:number) {
+export async function checkCardValidation(id:number) {
     const card = await cardRepository.findById(id)
-    if(!card) throw{type:404}
+    if(!card) throw{type:404,message:"Card not found"}
 
     if(card.isBlocked) throw{type:401, message:"This card is blocked"}
 
     const data = card.expirationDate.split('/');
     
-    if(!((data[1]===dayjs().format('YY')&&data[0]>=dayjs().format('MM'))||data[1]>=dayjs().format('YY')))throw{type:401}
+    if(!((data[1]===dayjs().format('YY')&&data[0]>=dayjs().format('MM'))||data[1]>=dayjs().format('YY')))throw{type:401,message:"Card expirated"}
 
     return card;
+}
+export async function checkCard(id:number) {
+    const card = await cardRepository.findById(id)
+    if(!card) throw{type:404,message:"Card not found"}
 }
 
 export async function checkPassword(password:string, encryptedPassword:string) {
     const decryptedPassword = cryptr.decrypt(encryptedPassword);
-    if(password !== decryptedPassword) throw{type:401}
+    if(password !== decryptedPassword) throw{type:401,message:"Wrong password"}
 }
 
 export async function getBalance(cardId:number) {
@@ -161,4 +138,11 @@ export async function getBalance(cardId:number) {
 
     return recharges - payments;
     
+}
+
+export async function getTransactionsByCard(cardId:number) {
+    const transactions = await paymentRepository.findByCardId(cardId)
+    const recharges = await rechargeRepository.findByCardId(cardId)
+
+    return {transactions, recharges};
 }
