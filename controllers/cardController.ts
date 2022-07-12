@@ -1,13 +1,15 @@
 import { Request, Response } from "express";
 import * as cardService from '../services/cardService.js';
+import * as companyService from '../services/companyService.js';
+import * as employeeService from '../services/employeeService.js';
 
 export async function createCard(req:Request, res:Response) {
 
         const {type, employeeId}:{type:string,employeeId:number} = req.body;
         const apiKey = req.header("x-api-key");
 
-        const companyId:number = await cardService.checkApiKey(apiKey)
-        const {employee, id}:{employee:string,id:number} = await cardService.checkEmployee(employeeId, companyId)
+        const companyId:number = await companyService.checkApiKey(apiKey)
+        const {employee, id}:{employee:string,id:number} = await employeeService.checkEmployeeAndGetCardHolderName(employeeId, companyId)
         await cardService.hasSameTypeCard(type, employeeId)
         await cardService.createCard(employee, id, type)
 

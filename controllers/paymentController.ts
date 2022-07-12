@@ -16,7 +16,6 @@ export async function payment(req:Request, res:Response) {
         await cardService.checkPassword(password, card.password)
 
         const balance = await cardService.getBalance(id)
-        console.log("🚀 ~ file: paymentController.ts ~ line 19 ~ payment ~ balance", balance)
         if(balance<amount)throw{type:401, message:"Insufficient funds"}
         await paymentService.payment(id, businessId, amount)
 

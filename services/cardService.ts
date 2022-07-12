@@ -3,45 +3,12 @@ import * as employeeRepository from "../repositories/employeeRepository.js";
 import * as companyRepository from "../repositories/companyRepository.js";
 import * as rechargeRepository from "../repositories/rechargeRepository.js";
 import * as paymentRepository from "../repositories/paymentRepository.js";
+import * as utils from "../utils/cardUtil.js";
 
 import { faker } from '@faker-js/faker';
-import Cryptr from 'cryptr'
 import dayjs from 'dayjs'
+import Cryptr from 'cryptr'
 const cryptr = new Cryptr(process.env.SECRET_KEY);
-
-
-export async function checkApiKey(apiKey:string){
-
-const company = await companyRepository.findByApiKey(apiKey)
-
-if(!company) throw{type: 404}
-
-return company.id;
-}
-
-export async function checkEmployee(id: number, companyId:number){
-
-    const employee = await employeeRepository.findById(id)
-
-    if(!employee) throw {type: 404, message:"Employee not found"}
-    if(employee.companyId !== companyId) throw{type:401, message:"This employee is not from this company"}
-
-    const arrayEmployeeName = employee.fullName.split(' ').filter(item=>{return item.length>=3})
-    let cardHolderName = '';
-
-    for(let i=0; i<arrayEmployeeName.length;i++){
-        if(i===0){
-            cardHolderName += arrayEmployeeName[i]
-            continue
-        }
-        if(i === arrayEmployeeName.length-1){
-            cardHolderName += " " + arrayEmployeeName[i]
-            continue
-        }
-        cardHolderName += " " + arrayEmployeeName[i].charAt(0).toUpperCase();
-    }
-    return {employee:cardHolderName.toUpperCase(), id:employee.id};
-}
 
 export async function createCard(name:string, id:number, type) {
     const number = faker.random.numeric(12).toString();
@@ -70,8 +37,7 @@ export async function hasSameTypeCard(type, id:number) {
 }
 
 export async function validateCard(CVC:string, id:number) {
-    const card = await cardRepository.findById(id)
-    if(!card)throw{type:404, message:"Card not found"}
+    const card = await utils.checkCard(id)
 
     if(card.password !==null) throw{type:404}
 
@@ -92,15 +58,11 @@ export async function updateCard(password:string, id:number) {
 }
 
 export async function changeBlockStatus(id:number, password:string) {
-    const card = await cardRepository.findById(id)
-    if(!card) throw{type:404,message:"Card not found"}
+    const card = await utils.checkCard(id)
 
-    const data = card.expirationDate.split('/');
+    await utils.checkExpirationDate(card.expirationDate)
 
-    if(!((data[1]===dayjs().format('YY')&&data[0]>=dayjs().format('MM'))||data[1]>=dayjs().format('YY')))throw{type:401}
-
-    const decryptedPassword = cryptr.decrypt(card.password);
-    if(password !== decryptedPassword) throw{type:401,message:"Wrong password"}
+    await utils.checkPassword(password, card.password)
 
     const blockCard = {
         isBlocked: !card.isBlocked
@@ -110,25 +72,21 @@ export async function changeBlockStatus(id:number, password:string) {
 }
 
 export async function checkCardValidation(id:number) {
-    const card = await cardRepository.findById(id)
-    if(!card) throw{type:404,message:"Card not found"}
+    const card = await utils.checkCard(id)
 
     if(card.isBlocked) throw{type:401, message:"This card is blocked"}
 
-    const data = card.expirationDate.split('/');
-    
-    if(!((data[1]===dayjs().format('YY')&&data[0]>=dayjs().format('MM'))||data[1]>=dayjs().format('YY')))throw{type:401,message:"Card expirated"}
+    await utils.checkExpirationDate(card.expirationDate)
 
     return card;
 }
+
 export async function checkCard(id:number) {
-    const card = await cardRepository.findById(id)
-    if(!card) throw{type:404,message:"Card not found"}
+    await utils.checkCard(id)
 }
 
 export async function checkPassword(password:string, encryptedPassword:string) {
-    const decryptedPassword = cryptr.decrypt(encryptedPassword);
-    if(password !== decryptedPassword) throw{type:401,message:"Wrong password"}
+    await utils.checkPassword(password, encryptedPassword)
 }
 
 export async function getBalance(cardId:number) {
