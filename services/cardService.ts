@@ -116,7 +116,7 @@ export async function unblockCard(cardData) {
 
     const data = card.expirationDate.split('/');
     
- if(!((data[1]===dayjs().format('YY')&&data[0]>=dayjs().format('MM'))||data[1]>=dayjs().format('YY')))throw{type:401}
+    if(!((data[1]===dayjs().format('YY')&&data[0]>=dayjs().format('MM'))||data[1]>=dayjs().format('YY')))throw{type:401}
 
 
     if(!card.isBlocked) throw{type:401}
@@ -132,4 +132,16 @@ export async function unblockCard(cardData) {
     }
 
     await cardRepository.update(card.id, unblockCard)
+}
+
+export async function checkCard(id:number) {
+    const card = await cardRepository.findById(id)
+    if(!card) throw{type:404}
+
+    if(card.isBlocked) throw{type:401, message:"This card is blocked"}
+    
+    const data = card.expirationDate.split('/');
+    
+    if(!((data[1]===dayjs().format('YY')&&data[0]>=dayjs().format('MM'))||data[1]>=dayjs().format('YY')))throw{type:401}
+
 }
