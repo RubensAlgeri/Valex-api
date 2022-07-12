@@ -15,7 +15,7 @@ export async function findByCardId(cardId: number) {
     `SELECT 
       payments.*,
       businesses.name as "businessName"
-     FROM payments 
+     FROM payments
       JOIN businesses ON businesses.id=payments."businessId"
      WHERE "cardId"=$1
     `,
@@ -33,3 +33,15 @@ export async function insert(paymentData: PaymentInsertData) {
     [cardId, businessId, amount]
   );
 }
+
+export async function paymentsSumByCard(cardId: number) {
+  const result = await connection.query<PaymentWithBusinessName, [number]>(
+    `SELECT 
+      SUM(amount)
+    FROM payments
+    WHERE "cardId"=$1
+    `,
+    [cardId]
+  )
+  return result.rows[0].sum;
+};

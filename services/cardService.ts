@@ -1,6 +1,8 @@
 import * as cardRepository from "../repositories/cardRepository.js";
 import * as employeeRepository from "../repositories/employeeRepository.js";
 import * as companyRepository from "../repositories/companyRepository.js";
+import * as rechargeRepository from "../repositories/rechargeRepository.js";
+import * as paymentRepository from "../repositories/paymentRepository.js";
 
 import { faker } from '@faker-js/faker';
 import Cryptr from 'cryptr'
@@ -139,9 +141,24 @@ export async function checkCard(id:number) {
     if(!card) throw{type:404}
 
     if(card.isBlocked) throw{type:401, message:"This card is blocked"}
-    
+
     const data = card.expirationDate.split('/');
     
     if(!((data[1]===dayjs().format('YY')&&data[0]>=dayjs().format('MM'))||data[1]>=dayjs().format('YY')))throw{type:401}
 
+    return card;
+}
+
+export async function checkPassword(password:string, encryptedPassword:string) {
+    const decryptedPassword = cryptr.decrypt(encryptedPassword);
+    if(password !== decryptedPassword) throw{type:401}
+}
+
+export async function getBalance(cardId:number) {
+
+    const recharges:number = await rechargeRepository.rechargesSumByCard(cardId)
+    const payments:number = await paymentRepository.paymentsSumByCard(cardId)
+
+    return recharges - payments;
+    
 }
