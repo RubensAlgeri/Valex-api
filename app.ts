@@ -1,19 +1,13 @@
-import express, { json } from 'express';
-import chalk from 'chalk';
+import express, { application, json } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-dotenv.config();
 
 import router from './routers/index.js';
 
-const server = express();
+const app = express();
 
-server.use(json());
-server.use(cors());
+app.use(json());
+app.use(cors());
 
-server.use(router);
+app.use(router);
 
-const PORT = +process.env.PORT || 4000;
-server.listen(PORT, () => {
-    console.log(chalk.bold.green(`Listening on ${PORT}`));
-});
+export default app

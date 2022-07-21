@@ -36,6 +36,7 @@ export async function hasSameTypeCard(type, id:number) {
 
 export async function validateCard(CVC:string, id:number) {
     const card = await utils.checkCard(id)
+    await utils.checkExpirationDate(card.expirationDate)
 
     if(card.password !==null) throw{type:404}
 

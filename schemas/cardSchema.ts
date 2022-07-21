@@ -7,7 +7,6 @@ export const insertCardSchema = joi.object({
 
 export const validateCardSchema = joi.object({
     CVC: joi.string().regex(/^[0-9]{3}$/).required(),
-    type: joi.string().valid('groceries', 'restaurant', 'transport', 'education', 'health').required(),
     password: joi.string().regex(/^[0-9]{4}$/).required()
 });
 
