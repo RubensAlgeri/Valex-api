@@ -13,5 +13,5 @@ export async function recharge(req:Request, res:Response) {
 
         await rechargeService.rechargeCard(id, amount)
 
-        res.sendStatus(200);
+        res.sendStatus(201);
 };

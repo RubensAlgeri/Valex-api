@@ -19,5 +19,5 @@ export async function payment(req:Request, res:Response) {
         if(balance<amount)throw{type:401, message:"Insufficient funds"}
         await paymentService.payment(id, businessId, amount)
 
-        res.sendStatus(200);
+        res.sendStatus(201);
 };

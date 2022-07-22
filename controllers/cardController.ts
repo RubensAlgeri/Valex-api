@@ -13,7 +13,7 @@ export async function createCard(req:Request, res:Response) {
         await cardService.hasSameTypeCard(type, employeeId)
         await cardService.createCard(employee, id, type)
 
-        res.sendStatus(200);
+        res.sendStatus(201);
 };
 
 export async function validateCard(req:Request, res:Response) {
